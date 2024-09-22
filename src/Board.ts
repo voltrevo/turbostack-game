@@ -348,7 +348,6 @@ export class Board {
         for (const piece of fittablePieces.values()) {
             const board = this.clone();
             board.insertPieceUnchecked(piece);
-            board.removeClears();
 
             for (const [i, j] of board.cols.map((c, j) => [c.top(), j])) {
                 if (i < Board.minI(j)) {

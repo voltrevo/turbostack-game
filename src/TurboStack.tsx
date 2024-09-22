@@ -34,26 +34,18 @@ const TurboStack: React.FC = () => {
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
 
-    // Map cursor position to grid coordinates
-    const col = Math.floor(mouseX / cellWidth);
-    const row = Math.floor(mouseY / cellHeight);
-
-    // Find the choice closest to the cursor
     let closestChoice: Board | null = null;
     let minDistance = Infinity;
 
     currentChoices.forEach((choice) => {
-      for (let i = 0; i < 20; i++) {
-        for (let j = 0; j < 10; j++) {
-          if (choice.get(i, j) && !board.get(i, j)) {
-            const dx = j - col;
-            const dy = i - row;
-            const distance = dx * dx + dy * dy;
-            if (distance < minDistance) {
-              minDistance = distance;
-              closestChoice = choice;
-            }
-          }
+      const center = calculateCenterOfMass(board, choice, cellWidth, cellHeight);
+      if (center) {
+        const dx = center.x - mouseX;
+        const dy = center.y - mouseY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestChoice = choice;
         }
       }
     });
@@ -64,9 +56,12 @@ const TurboStack: React.FC = () => {
   const handleClick = () => {
     if (board.finished || !previewBoard) return;
 
+    const newBoard = previewBoard.clone();
+    newBoard.removeClears();
+
     // Confirm placement
-    setBoard(previewBoard);
-    setBoardSequence([...boardSequence, previewBoard]);
+    setBoard(newBoard);
+    setBoardSequence([...boardSequence, newBoard]);
     setPreviewBoard(null);
   };
 
@@ -140,6 +135,39 @@ const TurboStack: React.FC = () => {
       </div>
     </div>
   );
+};
+
+function calculateCenterOfMass(
+  board: Board,
+  choice: Board,
+  cellWidth: number,
+  cellHeight: number
+) {
+  let sumX = 0;
+  let sumY = 0;
+  let count = 0;
+
+  for (let i = 0; i < 20; i++) {
+    for (let j = 0; j < 10; j++) {
+      if (choice.get(i, j) && !board.get(i, j)) {
+        // Calculate the center position of this block
+        const x = j * cellWidth + cellWidth / 2;
+        const y = i * cellHeight + cellHeight / 2;
+        sumX += x;
+        sumY += y;
+        count++;
+      }
+    }
+  }
+
+  if (count === 0) {
+    return null;
+  }
+
+  return {
+    x: sumX / count,
+    y: sumY / count,
+  };
 };
 
 export default TurboStack;
