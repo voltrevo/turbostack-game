@@ -30,25 +30,22 @@ const TurboStack: React.FC = () => {
     if (!gameAreaRef.current) return;
     const rect = gameAreaRef.current.getBoundingClientRect();
     const cellWidth = rect.width / 10;
-    const cellHeight = rect.height / 20;
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+    const cellHeight = rect.height / 15;
+    const mouseI = (event.clientY - rect.top) / cellHeight + 5;
+    const mouseJ = (event.clientX - rect.left) / cellWidth;
 
-    let closestChoice: Board | null = null;
-    let minDistance = Infinity;
-
-    currentChoices.forEach((choice) => {
-      const center = calculateCenterOfMass(board, choice, cellWidth, cellHeight);
-      if (center) {
-        const dx = center.x - mouseX;
-        const dy = center.y - mouseY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestChoice = choice;
-        }
-      }
+    const choiceDistances = currentChoices.map(choice => {
+      const center = calculateCenterOfMass(board, choice)!;
+      const di = center.i - mouseI;
+      const dj = center.j - mouseJ;
+      return Math.sqrt(di * di + dj * dj);
     });
+
+    const sortedIndexes = [...new Array(currentChoices.length)].map((_, i) => i);
+    sortedIndexes.sort((a, b) => choiceDistances[a] - choiceDistances[b]);
+
+    const closestChoice = currentChoices[0];
+    // const closestChoiceDistance = choiceDistances[sortedIndexes[pick % sortedIndexes.length]];
 
     setPreviewBoard(closestChoice);
   };
@@ -91,7 +88,7 @@ const TurboStack: React.FC = () => {
 
   const renderGrid = () => {
     const cells = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 5; i < 20; i++) {
       for (let j = 0; j < 10; j++) {
         cells.push(renderCell(i, j));
       }
@@ -140,21 +137,17 @@ const TurboStack: React.FC = () => {
 function calculateCenterOfMass(
   board: Board,
   choice: Board,
-  cellWidth: number,
-  cellHeight: number
 ) {
-  let sumX = 0;
-  let sumY = 0;
+  let sumI = 0;
+  let sumJ = 0;
   let count = 0;
 
   for (let i = 0; i < 20; i++) {
     for (let j = 0; j < 10; j++) {
       if (choice.get(i, j) && !board.get(i, j)) {
         // Calculate the center position of this block
-        const x = j * cellWidth + cellWidth / 2;
-        const y = i * cellHeight + cellHeight / 2;
-        sumX += x;
-        sumY += y;
+        sumI += (i + 0.5);
+        sumJ += (j + 0.5);
         count++;
       }
     }
@@ -165,8 +158,8 @@ function calculateCenterOfMass(
   }
 
   return {
-    x: sumX / count,
-    y: sumY / count,
+    i: sumI / count,
+    j: sumJ / count,
   };
 };
 

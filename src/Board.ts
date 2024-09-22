@@ -251,16 +251,8 @@ export class Board {
         return false;
     }
 
-    static minI(j: number): number {
-        switch (j) {
-            case 0:
-                return 4;
-            case 1:
-            case 2:
-                return 6;
-            default:
-                return 7;
-        }
+    static minI(_j: number): number {
+        return 5;
     }
 
     canFitPiece(piece: Piece): boolean {
