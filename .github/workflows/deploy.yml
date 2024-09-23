@@ -5,6 +5,11 @@ on:
     branches:
       - main  # Change this if your default branch is not 'main'
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
