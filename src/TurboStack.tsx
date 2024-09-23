@@ -78,7 +78,7 @@ const TurboStack: React.FC = () => {
                     key={index}
                     className={score === board.score ? 'current-score' : ''}
                   >
-                    {score}
+                    {scoreDisplay(score)}
                   </li>
                 ))}
               </ol>
@@ -87,7 +87,7 @@ const TurboStack: React.FC = () => {
         )}
       </div>
       <div className="score-panel">
-        <h3>Score: {board.score}</h3>
+        <h3>Score: {scoreDisplay(board.score)}</h3>
         <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
         {!board.finished && <button onClick={() => ctx.restart()}>Restart</button>}
       </div>
@@ -147,6 +147,10 @@ function choosePreviewBoard(
   // const closestChoiceDistance = choiceDistances[sortedIndexes[pick % sortedIndexes.length]];
 
   return closestChoice;
+}
+
+function scoreDisplay(rawScore: number) {
+  return (19 * rawScore).toLocaleString();
 }
 
 export default TurboStack;
