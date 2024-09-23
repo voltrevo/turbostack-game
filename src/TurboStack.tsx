@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Board } from './Board';
 import TurboStackCtx from './TurboStackCtx';
+import { stdMaxLines } from './params';
 
 const TurboStack: React.FC = () => {
   const ctx = TurboStackCtx.use();
@@ -87,6 +88,7 @@ const TurboStack: React.FC = () => {
         )}
       </div>
       <div className="score-panel">
+        <h3>Lines: {board.lines_cleared} / {stdMaxLines}</h3>
         <h3>Score: {scoreDisplay(board.score)}</h3>
         <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
         {!board.finished && <button onClick={() => ctx.restart()}>Restart</button>}
