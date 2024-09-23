@@ -4,11 +4,11 @@ import { stdMaxLines } from "./params";
 import Cell from "./Cell";
 import { getRandomPieceType } from "./PieceType";
 import LocalStorageCell from "./LocalStorageCell";
+import dataCollector from "./dataCollector";
 
 export default class TurboStackCtx {
   board = new Cell<Board>(new Board(stdMaxLines));
   currentChoices = new Cell<Board[]>([]);
-  boardSequence: Board[] = [];
   highScores = new LocalStorageCell<number[]>('high-scores', []);
 
   constructor() {
@@ -27,6 +27,7 @@ export default class TurboStackCtx {
   }
 
   chooseBoard(choice: Board) {
+    dataCollector.add(this.board.get(), choice);
     const c = choice.clone();
     c.removeClears();
     this.board.set(c);
@@ -40,7 +41,6 @@ export default class TurboStackCtx {
 
   restart() {
     this.board.set(new Board(stdMaxLines));
-    this.boardSequence = []; // todo: save old
   }
 
   private static context = createContext<TurboStackCtx>(
