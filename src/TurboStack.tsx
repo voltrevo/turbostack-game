@@ -1,72 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Board } from './Board';
-import { stdMaxLines } from './params';
-import { getRandomPieceType } from './PieceType';
+import TurboStackCtx from './TurboStackCtx';
 
 const TurboStack: React.FC = () => {
-  const [board, setBoard] = useState<Board>(new Board(stdMaxLines));
-  const [previewBoard, setPreviewBoard] = useState<Board | null>(null);
-  const [boardSequence, setBoardSequence] = useState<Board[]>([]);
-  const [highScores, setHighScores] = useState<number[]>([]);
-  const [currentChoices, setCurrentChoices] = useState<Board[]>([]);
+  const ctx = TurboStackCtx.use();
+  const board = ctx.board.use();
+  const [mousePos, setMousePos] = useState<{ i: number, j: number }>();
+  const highScores = ctx.highScores.use();
+  const currentChoices = ctx.currentChoices.use();
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!board.finished) {
-      const choices = board.findChoices(getRandomPieceType());
-      setCurrentChoices(choices);
-    } else {
-      // Update high scores
-      const newScores = [...highScores, board.score]
-        .sort((a, b) => b - a)
-        .slice(0, 10);
-      setHighScores(newScores);
-    }
-  }, [board]);
-
   const handleMouseMove = (event: React.MouseEvent) => {
-    if (board.finished || currentChoices.length === 0) return;
-
     if (!gameAreaRef.current) return;
     const rect = gameAreaRef.current.getBoundingClientRect();
     const cellWidth = rect.width / 10;
     const cellHeight = rect.height / 15;
-    const mouseI = (event.clientY - rect.top) / cellHeight + 5;
-    const mouseJ = (event.clientX - rect.left) / cellWidth;
 
-    const choiceDistances = currentChoices.map(choice => {
-      const center = calculateCenterOfMass(board, choice)!;
-      const di = center.i - mouseI;
-      const dj = center.j - mouseJ;
-      return Math.sqrt(di * di + dj * dj);
+    setMousePos({
+      i: (event.clientY - rect.top) / cellHeight + 5,
+      j: (event.clientX - rect.left) / cellWidth,
     });
-
-    const sortedIndexes = [...new Array(currentChoices.length)].map((_, i) => i);
-    sortedIndexes.sort((a, b) => choiceDistances[a] - choiceDistances[b]);
-
-    const closestChoice = currentChoices[0];
-    // const closestChoiceDistance = choiceDistances[sortedIndexes[pick % sortedIndexes.length]];
-
-    setPreviewBoard(closestChoice);
   };
+
+  const previewBoard = choosePreviewBoard(board, currentChoices, mousePos);
 
   const handleClick = () => {
-    if (board.finished || !previewBoard) return;
-
-    const newBoard = previewBoard.clone();
-    newBoard.removeClears();
-
-    // Confirm placement
-    setBoard(newBoard);
-    setBoardSequence([...boardSequence, newBoard]);
-    setPreviewBoard(null);
-  };
-
-  const handleRestart = () => {
-    const newBoard = new Board(stdMaxLines);
-    setBoard(newBoard);
-    setBoardSequence([]);
-    setPreviewBoard(null);
+    if (!board.finished && previewBoard) {
+      ctx.chooseBoard(previewBoard);
+    }
   };
 
   const renderCell = (i: number, j: number) => {
@@ -108,7 +69,7 @@ const TurboStack: React.FC = () => {
         {board.finished && (
           <div className="game-over">
             <h2>Game Over</h2>
-            <button onClick={handleRestart}>Restart</button>
+            <button onClick={() => ctx.restart()}>Restart</button>
             <div className="high-scores">
               <h3>High Scores</h3>
               <ol>
@@ -128,7 +89,7 @@ const TurboStack: React.FC = () => {
       <div className="score-panel">
         <h3>Score: {board.score}</h3>
         <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
-        {!board.finished && <button onClick={handleRestart}>Restart</button>}
+        {!board.finished && <button onClick={() => ctx.restart()}>Restart</button>}
       </div>
     </div>
   );
@@ -161,6 +122,31 @@ function calculateCenterOfMass(
     i: sumI / count,
     j: sumJ / count,
   };
-};
+}
+
+function choosePreviewBoard(
+  board: Board,
+  currentChoices: Board[],
+  mousePos: { i: number, j: number } | undefined,
+) {
+  if (board.finished || currentChoices.length === 0 || !mousePos) {
+    return undefined;
+  }
+
+  const choiceDistances = currentChoices.map(choice => {
+    const center = calculateCenterOfMass(board, choice)!;
+    const di = center.i - mousePos.i;
+    const dj = center.j - mousePos.j;
+    return Math.sqrt(di * di + dj * dj);
+  });
+
+  const sortedIndexes = [...new Array(currentChoices.length)].map((_, i) => i);
+  sortedIndexes.sort((a, b) => choiceDistances[a] - choiceDistances[b]);
+
+  const closestChoice = currentChoices[sortedIndexes[0]];
+  // const closestChoiceDistance = choiceDistances[sortedIndexes[pick % sortedIndexes.length]];
+
+  return closestChoice;
+}
 
 export default TurboStack;
