@@ -70,7 +70,7 @@ const TurboStack: React.FC = () => {
         {board.finished && (
           <div className="game-over">
             <h2>Game Over</h2>
-            <button onClick={() => ctx.restart()}>Restart</button>
+            <button onClick={() => ctx.restart()}>Play Again</button>
             <div className="high-scores">
               <h3>High Scores</h3>
               <ol>
