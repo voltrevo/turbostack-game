@@ -91,7 +91,12 @@ const TurboStack: React.FC = () => {
         <h3>Lines: {board.lines_cleared} / {stdMaxLines}</h3>
         <h3>Score: {scoreDisplay(board.score)}</h3>
         <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
-        {!board.finished && <button onClick={() => ctx.restart()}>Restart</button>}
+        <div>
+          {!board.finished && <button onClick={() => ctx.restart()}>Restart</button>}
+        </div>
+        <div style={{ marginTop: '0.5em' }}>
+          <button onClick={() => ctx.downloadData()}>Download your data</button>
+        </div>
       </div>
     </div>
   );

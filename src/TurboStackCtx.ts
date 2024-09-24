@@ -43,6 +43,25 @@ export default class TurboStackCtx {
     this.board.set(new Board(stdMaxLines));
   }
 
+  downloadData() {
+    const data = dataCollector.all();
+
+    const blob = new Blob(
+      [JSON.stringify(data, null, 2)],
+      { type: 'application/json' },
+    );
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `turbostack-data-${Date.now()}.json`;
+
+    // Trigger the download
+    link.click();
+
+    // Clean up
+    URL.revokeObjectURL(link.href);
+  }
+
   private static context = createContext<TurboStackCtx>(
     {} as TurboStackCtx,
   );
