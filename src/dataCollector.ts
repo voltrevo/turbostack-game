@@ -16,6 +16,7 @@ type Game = {
 
 class DataCollector {
   size = new LocalStorageUnit('dataCollector-size', 0);
+  loadSize = this.size.get();
 
   at(i: number) {
     return new LocalStorageUnit<DataItem | undefined>(
@@ -37,22 +38,24 @@ class DataCollector {
   }
 
   all() {
-    const res: DataItem[] = [];
-    let skips = 0;
+    return this.allFrom(0);
+  }
 
-    for (let i = 0; i < this.size.get(); i++) {
+  allSinceLoad() {
+    return this.allFrom(this.loadSize);
+  }
+
+  allFrom(start: number) {
+    const res: DataItem[] = [];
+
+    for (let i = start; i < this.size.get(); i++) {
       const item = this.at(i).get();
 
       if (item === undefined) {
-        skips++;
-        continue;
+        throw new Error('missing item');
       }
 
       res.push(item);
-    }
-
-    if (skips > 0) {
-      console.log(`Skipped ${skips} items`);
     }
 
     return res;

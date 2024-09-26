@@ -112,7 +112,18 @@ const Game: React.FC = () => {
         </div>
         {ctx.predictionModel && (
           <div style={{ marginTop: '0.5em' }}>
-            <button onClick={() => ctx.page.set('review')}>Review</button>
+            <button onClick={() => {
+              ctx.reviewMode.set('current');
+              ctx.page.set('review');
+            }}>Review Session</button>
+          </div>
+        )}
+        {ctx.predictionModel && (
+          <div style={{ marginTop: '0.5em' }}>
+            <button onClick={() => {
+              ctx.reviewMode.set('all');
+              ctx.page.set('review');
+            }}>Review History</button>
           </div>
         )}
         <div style={{ marginTop: '0.5em' }}>

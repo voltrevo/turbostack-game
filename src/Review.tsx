@@ -22,7 +22,11 @@ const Review: React.FC = () => {
         return;
       }
 
-      const rd = await getReviewData(ctx.predictionModel, setProgress);
+      const rd = await getReviewData(
+        ctx.reviewMode.get(),
+        ctx.predictionModel,
+        setProgress,
+      );
 
       if (rd.length === 0) {
         return;

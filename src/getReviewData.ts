@@ -1,5 +1,6 @@
 import { Board } from "./Board";
 import dataCollector from "./dataCollector";
+import never from "./never";
 import { ALL_PIECE_TYPES, PIECE_GRIDS } from "./PieceType";
 import { PredictionModel } from "./PredictionModel";
 import softmax from "./softmax";
@@ -10,13 +11,22 @@ type AsyncReturnType<T extends (...args: any) => any> = Unpromise<ReturnType<T>>
 export type ReviewData = AsyncReturnType<typeof getReviewData>;
 
 export default async function getReviewData(
+  mode: 'all' | 'current',
   predictionModel: PredictionModel,
   setProgress: (progress: string) => void,
 ) {
   const boardEvaluator = predictionModel.createBoardEvaluator();
   const points = [];
 
-  const sourceData = dataCollector.all(); //.slice(0, 1000);
+  let sourceData;
+
+  if (mode === 'all') {
+    sourceData = dataCollector.all();
+  } else if (mode === 'current') {
+    sourceData = dataCollector.allSinceLoad();
+  } else {
+    never(mode);
+  }
 
   for (const [i, data] of sourceData.entries()) {
     if (data.lastReview !== undefined) {

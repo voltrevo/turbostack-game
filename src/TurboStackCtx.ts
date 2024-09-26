@@ -15,6 +15,7 @@ export default class TurboStackCtx {
   currentChoiceWeights = new Cell<number[] | undefined>(undefined);
   currentCellWeights = new Cell<number[][] | undefined>(undefined);
   highScores = new LocalStorageCell<number[]>('high-scores', []);
+  reviewMode = new Cell<'all' | 'current'>('all');
   predictionModel?: PredictionModel;
 
   constructor(predictionModel?: PredictionModel) {
