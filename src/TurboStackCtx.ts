@@ -6,7 +6,7 @@ import { getRandomPieceType, PieceType } from "./PieceType";
 import LocalStorageCell from "./LocalStorageCell";
 import dataCollector from "./dataCollector";
 import { PredictionModel } from "./PredictionModel";
-import softmax from "./softMax";
+import softmax from "./softmax";
 
 export default class TurboStackCtx {
   page = new Cell<'game' | 'review'>('game');

@@ -2,7 +2,7 @@ import { Board } from "./Board";
 import dataCollector from "./dataCollector";
 import { ALL_PIECE_TYPES, PIECE_GRIDS } from "./PieceType";
 import { PredictionModel } from "./PredictionModel";
-import softmax from "./softMax";
+import softmax from "./softmax";
 
 type Unpromise<T> = T extends Promise<infer U> ? U : T;
 type AsyncReturnType<T extends (...args: any) => any> = Unpromise<ReturnType<T>>;
