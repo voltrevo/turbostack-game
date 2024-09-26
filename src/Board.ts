@@ -1,3 +1,4 @@
+import { extraFeatureLen, useCustomFeatures } from './hyperParams';
 import { grids, Piece, PieceType, RotateDir } from './PieceType';
 
 class BoardRow {
@@ -50,6 +51,34 @@ class BoardCol {
 
     height(): number {
         return 32 - Math.clz32(this.value);
+    }
+
+    denseLowerHeight(): number {
+        let res = 0;
+
+        for (let i = 19; i >= 0; i--) {
+            if (this.get(i)) {
+                res++;
+            } else {
+                break;
+            }
+        }
+
+        return res;
+    }
+
+    denseUpperHeight(): number {
+        let res = 0;
+
+        for (let i = this.top(); i < 20; i++) {
+            if (this.get(i)) {
+                res++;
+            } else {
+                break;
+            }
+        }
+
+        return res;
     }
 
     get(i: number): boolean {
@@ -392,6 +421,53 @@ export class Board {
         newBoard.score = this.score;
         newBoard.tetrises = this.tetrises;
         return newBoard;
+    }
+
+
+
+    toMlInputData() {
+        const boardData = new Uint8Array(21 * 12);
+
+        for (let i = 0; i < 20; i++) {
+            boardData[i * 12 + 0] = 1;
+
+            for (let j = 0; j < 10; j++) {
+                boardData[i * 12 + j + 1] = this.get(i, j) ? 1 : 0;
+            }
+
+            boardData[i * 12 + 11] = 1;
+        }
+
+        for (let j = 0; j < 12; j++) {
+            boardData[20 * 12 + j] = 1;
+        }
+
+        const extraFeatures = [this.linesRemaining(), this.score];
+
+        if (useCustomFeatures) {
+            const heights = this.cols.map(c => c.height());
+            const sortedHeights = heights.slice();
+            sortedHeights.sort((a, b) => a - b);
+
+            const denseLowerHeights = this.cols.map(c => c.denseLowerHeight());
+            const denseUpperHeights = this.cols.map(c => c.denseUpperHeight());
+
+            extraFeatures.push(...[
+                ...heights,
+                ...sortedHeights,
+                ...denseLowerHeights,
+                ...denseUpperHeights,
+            ]);
+        }
+
+        if (extraFeatures.length !== extraFeatureLen) {
+            throw new Error('extraFeatures len mismatch');
+        }
+
+        return {
+            boardData,
+            extraFeatures,
+        };
     }
 
     maxHeight() {

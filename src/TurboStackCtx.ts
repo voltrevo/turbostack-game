@@ -5,17 +5,25 @@ import Cell from "./Cell";
 import { getRandomPieceType } from "./PieceType";
 import LocalStorageCell from "./LocalStorageCell";
 import dataCollector from "./dataCollector";
+import { PredictionModel } from "./PredictionModel";
+import softmax from "./softMax";
 
 export default class TurboStackCtx {
   board = new Cell<Board>(new Board(stdMaxLines));
   currentChoices = new Cell<Board[]>([]);
+  currentChoiceWeights = new Cell<number[][] | undefined>(undefined);
   highScores = new LocalStorageCell<number[]>('high-scores', []);
+  predictionModel?: PredictionModel;
 
-  constructor() {
+  constructor(predictionModel?: PredictionModel) {
+    this.predictionModel = predictionModel;
+
     const handleBoardChange = () => {
       this.currentChoices.set(
         this.board.get().findChoices(getRandomPieceType()),
       );
+
+      this.recalculateWeights();
 
       if (this.board.get().finished) {
         this.addScore(this.board.get().score);
@@ -24,6 +32,45 @@ export default class TurboStackCtx {
 
     handleBoardChange();
     this.board.on('change', handleBoardChange);
+  }
+
+  recalculateWeights() {
+    if (!this.predictionModel) {
+      return;
+    }
+
+    const boardEvaluator = this.predictionModel.createBoardEvaluator();
+
+    const choiceWeights = softmax(boardEvaluator(
+      this.currentChoices.get().map(c => {
+        c = c.clone();
+        c.removeClears();
+        return c;
+      }),
+    ));
+
+    const cellWeights = [];
+    const board = this.board.get();
+
+    for (let i = 0; i < 20; i++) {
+      cellWeights.push([] as number[]);
+
+      for (let j = 0; j < 10; j++) {
+        let sum = 0;
+
+        if (!board.get(i, j)) {
+          for (const [ci, choice] of this.currentChoices.get().entries()) {
+            if (choice.get(i, j)) {
+              sum += choiceWeights[ci];
+            }
+          }
+        }
+
+        cellWeights[i].push(sum);
+      }
+    }
+
+    this.currentChoiceWeights.set(cellWeights);
   }
 
   chooseBoard(choice: Board) {

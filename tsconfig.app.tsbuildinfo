@@ -1,0 +1,1 @@
+{"root":["./src/board.ts","./src/cell.ts","./src/localstoragecell.ts","./src/localstorageunit.ts","./src/piecetype.ts","./src/turbostack.tsx","./src/turbostackctx.ts","./src/datacollector.ts","./src/main.tsx","./src/params.ts","./src/vite-env.d.ts"],"version":"5.6.2"}

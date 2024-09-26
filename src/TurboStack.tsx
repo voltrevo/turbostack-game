@@ -33,10 +33,14 @@ const TurboStack: React.FC = () => {
 
   const renderCell = (i: number, j: number) => {
     const isFilled = board.get(i, j);
+
+    const currentChoiceWeights = ctx.currentChoiceWeights.get();
+
+    const weight = currentChoiceWeights ? currentChoiceWeights[i][j] : 0;
     let isPreview = false;
 
-    if (previewBoard && !isFilled) {
-      isPreview = previewBoard.get(i, j);
+    if (!isFilled && previewBoard && previewBoard.get(i, j)) {
+      isPreview = true;
     }
 
     const className = isFilled
@@ -45,7 +49,17 @@ const TurboStack: React.FC = () => {
       ? 'cell preview'
       : 'cell';
 
-    return <div key={`${i}-${j}`} className={className} />;
+    // const cv = Math.floor(16 + 100 * weight);
+
+    return <>
+      <div
+        // style={{ border: `3px solid rgb(${cv}, ${cv}, ${cv})` }}
+        key={`${i}-${j}`}
+        className={className}
+      >
+        <div className="ai-dot" style={{ opacity: weight }}></div>
+      </div>
+    </>;
   };
 
   const renderGrid = () => {
