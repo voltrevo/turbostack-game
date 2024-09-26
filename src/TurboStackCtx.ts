@@ -2,13 +2,14 @@ import { createContext, useContext } from "react";
 import { Board } from "./Board";
 import { stdMaxLines } from "./params";
 import Cell from "./Cell";
-import { getRandomPieceType } from "./PieceType";
+import { getRandomPieceType, PieceType } from "./PieceType";
 import LocalStorageCell from "./LocalStorageCell";
 import dataCollector from "./dataCollector";
 import { PredictionModel } from "./PredictionModel";
 import softmax from "./softMax";
 
 export default class TurboStackCtx {
+  page = new Cell<'game' | 'review'>('game');
   board = new Cell<Board>(new Board(stdMaxLines));
   currentChoices = new Cell<Board[]>([]);
   currentChoiceWeights = new Cell<number[][] | undefined>(undefined);
@@ -71,6 +72,14 @@ export default class TurboStackCtx {
     }
 
     this.currentChoiceWeights.set(cellWeights);
+  }
+
+  setCurrentPiece(pieceType: PieceType) {
+    this.currentChoices.set(
+      this.board.get().findChoices(pieceType),
+    );
+
+    this.recalculateWeights();
   }
 
   chooseBoard(choice: Board) {

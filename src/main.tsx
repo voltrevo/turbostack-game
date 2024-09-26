@@ -1,9 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import TurboStack from './TurboStack.tsx'
 import TurboStackCtx from './TurboStackCtx.ts'
 import { PredictionModel } from './PredictionModel.ts'
+import PageSelector from './PageSelector.tsx'
 
 (async () => {
   const predictionModel = await PredictionModel.load();
@@ -12,7 +12,7 @@ import { PredictionModel } from './PredictionModel.ts'
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <TurboStackCtx.Provider value={ctx}>
-        <TurboStack />
+        <PageSelector />
       </TurboStackCtx.Provider>
     </StrictMode>,
   );

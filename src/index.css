@@ -51,6 +51,10 @@ body {
   background-color: rgb(0, 81, 255);
 }
 
+.cell.previous-move {
+  background-color: rgba(246, 255, 0, 0.139);
+}
+
 .cell.preview {
   background-color: rgba(0, 174, 255, 1);
 }

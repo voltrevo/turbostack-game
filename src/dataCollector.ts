@@ -1,7 +1,9 @@
 import { Board, BoardJson } from "./Board";
 import LocalStorageUnit from "./LocalStorageUnit";
 
-type DataItem = {
+export type DataItem = {
+  time?: number,
+  lastReview?: number,
   from: BoardJson,
   to: BoardJson,
 };
@@ -20,6 +22,7 @@ class DataCollector {
     const i = this.size.get();
 
     this.at(i).set({
+      time: Date.now(),
       from: from.toJson(),
       to: to.toJson(),
     });

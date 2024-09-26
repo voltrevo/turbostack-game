@@ -3,7 +3,7 @@ import { Board } from './Board';
 import TurboStackCtx from './TurboStackCtx';
 import { stdMaxLines } from './params';
 
-const TurboStack: React.FC = () => {
+const Game: React.FC = () => {
   const ctx = TurboStackCtx.use();
   const board = ctx.board.use();
   const [mousePos, setMousePos] = useState<{ i: number, j: number }>();
@@ -108,6 +108,11 @@ const TurboStack: React.FC = () => {
         <div>
           {!board.finished && <button onClick={() => ctx.restart()}>Restart</button>}
         </div>
+        {ctx.predictionModel && (
+          <div style={{ marginTop: '0.5em' }}>
+            <button onClick={() => ctx.page.set('review')}>Review</button>
+          </div>
+        )}
         <div style={{ marginTop: '0.5em' }}>
           <button onClick={() => ctx.downloadData()}>Download your data</button>
         </div>
@@ -174,4 +179,4 @@ function scoreDisplay(rawScore: number) {
   return (19 * rawScore).toLocaleString();
 }
 
-export default TurboStack;
+export default Game;

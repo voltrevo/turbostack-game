@@ -37,7 +37,7 @@ class BoardRow {
 }
 
 class BoardCol {
-    private value: number;
+    public value: number;
 
     constructor() {
         this.value = 0;
@@ -173,6 +173,18 @@ export class Board {
         board.tetrises = json.tetrises;
 
         return board;
+    }
+
+    static equal(a: Board, b: Board) {
+        return (
+            a.cols.every((c, i) => c.value === b.cols[i].value) &&
+            a.lines_cleared === b.lines_cleared &&
+            a.lines_cleared_max === b.lines_cleared_max &&
+            a.finished === b.finished &&
+            a.score === b.score &&
+            a.tetrises === b.tetrises &&
+            true
+        );
     }
 
     static fromCompact(lines_cleared_max: number, s: string): Board {
