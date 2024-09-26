@@ -10,6 +10,7 @@ const Game: React.FC = () => {
   const highScores = ctx.highScores.use();
   const currentChoices = ctx.currentChoices.use();
   const gameAreaRef = useRef<HTMLDivElement>(null);
+  const [showAi, setShowAi] = useState(false);
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!gameAreaRef.current) return;
@@ -49,15 +50,12 @@ const Game: React.FC = () => {
       ? 'cell preview'
       : 'cell';
 
-    // const cv = Math.floor(16 + 100 * weight);
-
     return <>
       <div
-        // style={{ border: `3px solid rgb(${cv}, ${cv}, ${cv})` }}
         key={`${i}-${j}`}
         className={className}
       >
-        <div className="ai-dot" style={{ opacity: weight }}></div>
+        {showAi && <div className="ai-dot" style={{ opacity: weight }}></div>}
       </div>
     </>;
   };
@@ -105,6 +103,10 @@ const Game: React.FC = () => {
         <h3>Lines: {board.lines_cleared} / {stdMaxLines}</h3>
         <h3>Score: {scoreDisplay(board.score)}</h3>
         <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
+        <h3>
+          <input type="checkbox" checked={showAi} onChange={() => setShowAi(!showAi)} />
+          Show AI
+        </h3>
         <div>
           {!board.finished && <button onClick={() => ctx.restart()}>Restart</button>}
         </div>
