@@ -34,7 +34,7 @@ const Game: React.FC = () => {
   const renderCell = (i: number, j: number) => {
     const isFilled = board.get(i, j);
 
-    const currentChoiceWeights = ctx.currentChoiceWeights.get();
+    const currentChoiceWeights = ctx.currentCellWeights.get();
 
     const weight = currentChoiceWeights ? currentChoiceWeights[i][j] : 0;
     let isPreview = false;

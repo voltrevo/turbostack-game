@@ -12,7 +12,8 @@ export default class TurboStackCtx {
   page = new Cell<'game' | 'review'>('game');
   board = new Cell<Board>(new Board(stdMaxLines));
   currentChoices = new Cell<Board[]>([]);
-  currentChoiceWeights = new Cell<number[][] | undefined>(undefined);
+  currentChoiceWeights = new Cell<number[] | undefined>(undefined);
+  currentCellWeights = new Cell<number[][] | undefined>(undefined);
   highScores = new LocalStorageCell<number[]>('high-scores', []);
   predictionModel?: PredictionModel;
 
@@ -50,6 +51,8 @@ export default class TurboStackCtx {
       }),
     ));
 
+    this.currentChoiceWeights.set(choiceWeights);
+
     const cellWeights = [];
     const board = this.board.get();
 
@@ -71,7 +74,7 @@ export default class TurboStackCtx {
       }
     }
 
-    this.currentChoiceWeights.set(cellWeights);
+    this.currentCellWeights.set(cellWeights);
   }
 
   setCurrentPiece(pieceType: PieceType) {

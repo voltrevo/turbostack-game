@@ -16,7 +16,7 @@ export default async function getReviewData(
   const boardEvaluator = predictionModel.createBoardEvaluator();
   const points = [];
 
-  const sourceData = dataCollector.all().slice(0, 1000);
+  const sourceData = dataCollector.all(); //.slice(0, 1000);
 
   for (const [i, data] of sourceData.entries()) {
     if (data.lastReview !== undefined) {
@@ -30,7 +30,10 @@ export default async function getReviewData(
     realTo.removeClears();
 
     const pieceType = detectPiece(from, to);
-    const choices = from.findChoices(pieceType);
+    const choices = from.findChoices(pieceType).map(c => {
+        c.removeClears();
+        return c;
+    });
 
     let toIndex: number | undefined = undefined;
 

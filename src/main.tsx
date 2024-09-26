@@ -9,6 +9,8 @@ import PageSelector from './PageSelector.tsx'
   const predictionModel = await PredictionModel.load();
   const ctx = new TurboStackCtx(predictionModel);
 
+  (window as any).ctx = ctx;
+
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <TurboStackCtx.Provider value={ctx}>

@@ -10,6 +10,7 @@ const Review: React.FC = () => {
   const board = ctx.board.use();
   const [mousePos, setMousePos] = useState<{ i: number, j: number }>();
   const currentChoices = ctx.currentChoices.use();
+  const currentChoiceWeights = ctx.currentChoiceWeights.use();
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const [reviewData, setReviewData] = useState<ReviewData>();
   const [reviewIndex, setReviewIndex] = useState(0);
@@ -46,6 +47,12 @@ const Review: React.FC = () => {
   };
 
   const previewBoard = choosePreviewBoard(board, currentChoices, mousePos);
+  let previewProbability: number | undefined = undefined;
+
+  if (previewBoard && currentChoiceWeights) {
+    const pi = currentChoices.indexOf(previewBoard);
+    previewProbability = currentChoiceWeights[pi];
+  }
 
   const handleClick = () => {
     if (!reviewData || !previewBoard) {
@@ -84,9 +91,9 @@ const Review: React.FC = () => {
       false
     );
 
-    const currentChoiceWeights = ctx.currentChoiceWeights.get();
+    const currentCellWeights = ctx.currentCellWeights.get();
 
-    const weight = currentChoiceWeights ? currentChoiceWeights[i][j] : 0;
+    const weight = currentCellWeights ? currentCellWeights[i][j] : 0;
     let isPreview = false;
 
     if (!isFilled && previewBoard && previewBoard.get(i, j)) {
@@ -136,6 +143,9 @@ const Review: React.FC = () => {
         {renderGrid()}
       </div>
       <div className="score-panel">
+        <h3>Review: {reviewIndex + 1} / {reviewData.length}</h3>
+        <h3>P(Yellow): {(reviewData[reviewIndex].probability * 100).toFixed(1)}%</h3>
+        <h3>P(Selected): {previewProbability === undefined ? 'error' : (previewProbability * 100).toFixed(1)}%</h3>
         <h3>Lines: {board.lines_cleared} / {stdMaxLines}</h3>
         <h3>Score: {scoreDisplay(board.score)}</h3>
         <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
