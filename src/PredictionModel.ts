@@ -96,7 +96,7 @@ export class PredictionModel {
 
     static async load() {
         try {
-            const evalModel = await tf.loadLayersModel(location.href + 'data/predictionModel/model.json');
+            const evalModel = await tf.loadLayersModel(location.href + 'predictionModel/model.json');
             const combinedModel = PredictionModel.createCombinedModel(evalModel);
 
             return new PredictionModel(evalModel, combinedModel);
