@@ -16,6 +16,8 @@ export default class TurboStackCtx {
   currentCellWeights = new Cell<number[][] | undefined>(undefined);
   highScores = new LocalStorageCell<number[]>('high-scores', []);
   reviewMode = new Cell<'all' | 'current'>('all');
+  autoPlay = new Cell<boolean>(false);
+  autoPlayTimer?: NodeJS.Timeout;
   predictionModel?: PredictionModel;
 
   constructor(predictionModel?: PredictionModel) {
@@ -35,6 +37,39 @@ export default class TurboStackCtx {
 
     handleBoardChange();
     this.board.on('change', handleBoardChange);
+
+    this.autoPlay.on('change', () => {
+      if (this.autoPlay.get()) {
+        (async () => {
+          while (true) {
+            if (!this.autoPlay.get()) {
+              break;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            const board = this.board.get();
+            const currentChoices = this.currentChoices.get();
+
+            if (board.finished) {
+              continue;
+            }
+
+            const weights = this.currentChoiceWeights.get();
+
+            if (!weights) {
+              continue;
+            }
+  
+            const highestWeightIndex = weights.indexOf(Math.max(...weights));
+
+            this.chooseBoard(currentChoices[highestWeightIndex]);
+          }
+        })();
+      } else {
+        clearInterval(this.autoPlayTimer);
+      }
+    });
   }
 
   recalculateWeights() {
@@ -87,7 +122,10 @@ export default class TurboStackCtx {
   }
 
   chooseBoard(choice: Board) {
-    dataCollector.add(this.board.get(), choice);
+    if (!this.autoPlay.get()) {
+      dataCollector.add(this.board.get(), choice);
+    }
+
     const c = choice.clone();
     c.removeClears();
     this.board.set(c);
@@ -96,7 +134,7 @@ export default class TurboStackCtx {
   addScore(score: number) {
     const newHighScores = [...this.highScores.get(), score];
     newHighScores.sort((a, b) => b - a);
-    this.highScores.set(newHighScores);
+    this.highScores.set(newHighScores.slice(0, 10));
   }
 
   restart() {

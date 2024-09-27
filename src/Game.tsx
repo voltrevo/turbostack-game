@@ -11,6 +11,7 @@ const Game: React.FC = () => {
   const currentChoices = ctx.currentChoices.use();
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const [showAi, setShowAi] = useState(false);
+  const autoPlay = ctx.autoPlay.use();
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!gameAreaRef.current) return;
@@ -24,7 +25,11 @@ const Game: React.FC = () => {
     });
   };
 
-  const previewBoard = choosePreviewBoard(board, currentChoices, mousePos);
+  let previewBoard: Board | undefined = undefined;
+
+  if (!autoPlay) {
+    previewBoard = choosePreviewBoard(board, currentChoices, mousePos);
+  }
 
   const handleClick = () => {
     if (!board.finished && previewBoard) {
@@ -129,6 +134,10 @@ const Game: React.FC = () => {
         <div style={{ marginTop: '0.5em' }}>
           <button onClick={() => ctx.downloadData()}>Download your data</button>
         </div>
+        <h3>
+          <input type="checkbox" checked={autoPlay} onChange={() => ctx.autoPlay.set(!autoPlay)} />
+          Autoplay
+        </h3>
       </div>
     </div>
   );
