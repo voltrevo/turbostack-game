@@ -1,42 +1,30 @@
-import React, { useState, useRef } from 'react';
-import { Board } from './Board';
+import React, { useState } from 'react';
 import TurboStackCtx from './TurboStackCtx';
 import { stdMaxLines } from './params';
 import { relScoreDisplay } from './relScoreDisplay';
 import { choosePreviewBoard, scoreDisplay } from './gameUtils';
+import Grid from './components/Grid';
+import { useMousePosition } from './hooks/useMousePosition';
+import { Board } from './Board';
 
 const Game: React.FC = () => {
   const ctx = TurboStackCtx.use();
   const board = ctx.board.use();
-  const [mousePos, setMousePos] = useState<{ i: number; j: number }>();
   const highScores = ctx.highScores.use();
-  const currentChoices = ctx.currentChoices.use();
-  const currentTop5Choices = ctx.currentTop5Choices.use();
-  const gameAreaRef = useRef<HTMLDivElement>(null);
   const [showAi, setShowAi] = useState(false);
   const [top5Only, setTop5Only] = useState(false);
   const autoPlay = ctx.autoPlay.use();
   const currentChoiceWeights = ctx.currentChoiceWeights.use();
   const currentCellWeights = ctx.currentCellWeights.use();
   const currentTop5CellWeights = ctx.currentTop5CellWeights.use();
-  const applicableChoices = top5Only ? currentTop5Choices : currentChoices;
+  const applicableChoices = top5Only ? ctx.currentTop5Choices.use() : ctx.currentChoices.use();
 
-  const handleMouseMove = (event: React.MouseEvent) => {
-    if (!gameAreaRef.current) return;
-    const rect = gameAreaRef.current.getBoundingClientRect();
-    const cellWidth = rect.width / 10;
-    const cellHeight = rect.height / 15;
+  const { mousePos, gameAreaRef, handleMouseMove } = useMousePosition();
 
-    setMousePos({
-      i: (event.clientY - rect.top) / cellHeight + 5,
-      j: (event.clientX - rect.left) / cellWidth,
-    });
-  };
-
-  let previewBoard: Board | undefined = undefined;
-  let previewBoardIndex: number | undefined = undefined;
-  let previewBoardRating: number | undefined = undefined;
-  let relPreviewBoardRating: number | undefined = undefined;
+  let previewBoard: Board | undefined;
+  let previewBoardIndex: number | undefined;
+  let previewBoardRating: number | undefined;
+  let relPreviewBoardRating: number | undefined;
 
   if (!autoPlay) {
     const result = choosePreviewBoard(board, applicableChoices, mousePos);
@@ -56,30 +44,7 @@ const Game: React.FC = () => {
     }
   };
 
-  const renderGrid = () => {
-    const cells = [];
-    for (let i = 5; i < 20; i++) {
-      for (let j = 0; j < 10; j++) {
-        const isFilled = board.get(i, j);
-        const applicableWeights = top5Only ? currentTop5CellWeights : currentCellWeights;
-        const weight = applicableWeights ? applicableWeights[i][j] : 0;
-        const isPreview = !isFilled && previewBoard && previewBoard.get(i, j);
-
-        const className = isFilled
-          ? 'cell filled'
-          : isPreview
-          ? 'cell preview'
-          : 'cell';
-
-        cells.push(
-          <div key={`${i}-${j}`} className={className}>
-            {showAi && <div className="ai-dot" style={{ opacity: weight }}></div>}
-          </div>
-        );
-      }
-    }
-    return <div className="grid">{cells}</div>;
-  };
+  const applicableWeights = top5Only ? currentTop5CellWeights : currentCellWeights;
 
   return (
     <div className="game-container">
@@ -89,7 +54,12 @@ const Game: React.FC = () => {
         onMouseMove={handleMouseMove}
         onClick={handleClick}
       >
-        {renderGrid()}
+        <Grid
+          board={board}
+          previewBoard={previewBoard}
+          currentCellWeights={applicableWeights}
+          showAi={showAi}
+        />
         {board.finished && (
           <div className="game-over">
             <h2>Game Over</h2>
@@ -179,9 +149,7 @@ const Game: React.FC = () => {
           </div>
         )}
         <div style={{ marginTop: '0.5em' }}>
-          <button onClick={() => ctx.downloadData()}>
-            Download your data
-          </button>
+          <button onClick={() => ctx.downloadData()}>Download your data</button>
         </div>
         <h3>
           <input
