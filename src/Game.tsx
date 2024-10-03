@@ -81,84 +81,77 @@ const Game: React.FC = () => {
         )}
       </div>
       <div className="score-panel">
-        <h3>
-          Lines: {board.lines_cleared} / {stdMaxLines}
-        </h3>
-        <h3>Score: {scoreDisplay(board.score)}</h3>
-        <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
-        <h3>
-          <input
-            type="checkbox"
-            checked={showAi}
-            onChange={() => setShowAi(!showAi)}
-          />
-          Show AI
-        </h3>
-        {showAi && (
-          <>
-            <h3>
-              <input
-                type="checkbox"
-                checked={top5Only}
-                onChange={() => setTop5Only(!top5Only)}
-              />
-              Top 5 Only
-            </h3>
-            {!top5Only && (
-              <>
-                <h3 style={{ width: '15em' }}>
-                  Rating: {relScoreDisplay(relPreviewBoardRating)}
-                </h3>
-                <h3>
-                  Prediction:{' '}
-                  {currentChoiceWeights
-                    ? `${scoreDisplay(Math.max(...currentChoiceWeights))}`
-                    : ''}
-                </h3>
-              </>
-            )}
-          </>
-        )}
-        <div>
-          {!board.finished && (
-            <button onClick={() => ctx.restart()}>Restart</button>
+        <div className="score-box">
+          <div>Lines: {board.lines_cleared} / {stdMaxLines}</div>
+          <div>Score: {scoreDisplay(board.score)}</div>
+          <div>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</div>
+        </div>
+
+        <div className="score-box">
+          <div>
+            <input
+              type="checkbox"
+              checked={showAi}
+              onChange={() => setShowAi(!showAi)}
+            />
+            Show AI
+          </div>
+          {showAi && (
+            <>
+              <div>
+                <input
+                  type="checkbox"
+                  checked={autoPlay}
+                  onChange={() => ctx.autoPlay.set(!autoPlay)}
+                />
+                Autoplay
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  checked={top5Only}
+                  onChange={() => setTop5Only(!top5Only)}
+                />
+                Top 5 Only
+              </div>
+              {!top5Only && (
+                <>
+                  <div style={{ width: '15em' }}>
+                    Rating: {relScoreDisplay(relPreviewBoardRating)}
+                  </div>
+                  <div>
+                    Prediction:{' '}
+                    {currentChoiceWeights
+                      ? `${scoreDisplay(Math.max(...currentChoiceWeights))}`
+                      : ''}
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
-        {ctx.scoreModel && (
-          <div style={{ marginTop: '0.5em' }}>
-            <button
-              onClick={() => {
+
+        <div className="score-box">
+          <div><button onClick={() => ctx.restart()}>Restart</button></div>
+          {ctx.scoreModel && (
+            <>
+              <div><button onClick={() => {
                 ctx.reviewMode.set('current');
                 ctx.page.set('review');
-              }}
-            >
-              Review Session
-            </button>
-          </div>
-        )}
-        {ctx.scoreModel && (
-          <div style={{ marginTop: '0.5em' }}>
-            <button
-              onClick={() => {
+              }}>
+                Review Session
+              </button></div>
+
+              <div><button onClick={() => {
                 ctx.reviewMode.set('all');
                 ctx.page.set('review');
-              }}
-            >
-              Review History
-            </button>
-          </div>
-        )}
-        <div style={{ marginTop: '0.5em' }}>
+              }}>
+                Review History
+              </button></div>
+            </>
+          )}
           <button onClick={() => ctx.downloadData()}>Download your data</button>
         </div>
-        <h3>
-          <input
-            type="checkbox"
-            checked={autoPlay}
-            onChange={() => ctx.autoPlay.set(!autoPlay)}
-          />
-          Autoplay
-        </h3>
       </div>
     </div>
   );
