@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Board } from './Board';
 import TurboStackCtx from './TurboStackCtx';
 import { stdMaxLines } from './params';
 import getReviewData, { ReviewData } from './getReviewData';
 import dataCollector from './dataCollector';
 import { relScoreDisplay } from './relScoreDisplay';
+import { choosePreviewBoard, scoreDisplay } from './gameUtils';
 
 const Review: React.FC = () => {
   const ctx = TurboStackCtx.use();
   const board = ctx.board.use();
-  const [mousePos, setMousePos] = useState<{ i: number, j: number }>();
+  const [mousePos, setMousePos] = useState<{ i: number; j: number }>();
   const currentChoices = ctx.currentChoices.use();
   const currentChoiceWeights = ctx.currentChoiceWeights.use();
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -23,11 +23,7 @@ const Review: React.FC = () => {
         return;
       }
 
-      const rd = await getReviewData(
-        ctx.reviewMode.get(),
-        ctx.scoreModel,
-        setProgress,
-      );
+      const rd = await getReviewData(ctx.reviewMode.get(), ctx.scoreModel, setProgress);
 
       if (rd.length === 0) {
         return;
@@ -37,7 +33,7 @@ const Review: React.FC = () => {
       ctx.board.set(rd[0].from);
       ctx.setCurrentPiece(rd[0].pieceType);
     })();
-  }, []);
+  }, [ctx]);
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!gameAreaRef.current) return;
@@ -51,7 +47,7 @@ const Review: React.FC = () => {
     });
   };
 
-  const previewBoard = choosePreviewBoard(board, currentChoices, mousePos);
+  const { choice: previewBoard } = choosePreviewBoard(board, currentChoices, mousePos);
   let previewWeight: number | undefined = undefined;
 
   if (previewBoard && currentChoiceWeights) {
@@ -74,7 +70,7 @@ const Review: React.FC = () => {
     });
 
     if (reviewIndex === reviewData.length - 1) {
-      alert('finished');
+      alert('Finished reviewing!');
       return;
     }
 
@@ -84,57 +80,45 @@ const Review: React.FC = () => {
     ctx.setCurrentPiece(reviewData[ri].pieceType);
   };
 
-  const renderCell = (i: number, j: number) => {
-    const isFilled = board.get(i, j);
-
-    const isPreviousMove = (
-      (
-        !isFilled &&
-        reviewData &&
-        reviewData[reviewIndex].to.get(i, j)
-      ) ||
-      false
-    );
-
-    const currentCellWeights = ctx.currentCellWeights.get();
-
-    const weight = currentCellWeights ? currentCellWeights[i][j] : 0;
-    let isPreview = false;
-
-    if (!isFilled && previewBoard && previewBoard.get(i, j)) {
-      isPreview = true;
-    }
-
-    const className = isFilled
-      ? 'cell filled'
-      : isPreview
-      ? 'cell preview'
-      : isPreviousMove
-      ? 'cell previous-move'
-      : 'cell';
-
-    return <>
-      <div
-        key={`${i}-${j}`}
-        className={className}
-      >
-        <div className="ai-dot" style={{ opacity: weight }}></div>
-      </div>
-    </>;
-  };
-
   const renderGrid = () => {
     const cells = [];
     for (let i = 5; i < 20; i++) {
       for (let j = 0; j < 10; j++) {
-        cells.push(renderCell(i, j));
+        const isFilled = board.get(i, j);
+
+        const isPreviousMove =
+          !isFilled && reviewData && reviewData[reviewIndex].to.get(i, j);
+
+        const currentCellWeights = ctx.currentCellWeights.get();
+        const weight = currentCellWeights ? currentCellWeights[i][j] : 0;
+
+        const isPreview =
+          !isFilled && previewBoard && previewBoard.get(i, j);
+
+        const className = isFilled
+          ? 'cell filled'
+          : isPreview
+          ? 'cell preview'
+          : isPreviousMove
+          ? 'cell previous-move'
+          : 'cell';
+
+        cells.push(
+          <div key={`${i}-${j}`} className={className}>
+            <div className="ai-dot" style={{ opacity: weight }}></div>
+          </div>
+        );
       }
     }
     return <div className="grid">{cells}</div>;
   };
 
   if (!reviewData) {
-    return <div>Loading... {progress}</div>;
+    return (
+      <div>
+        Loading... {progress}
+      </div>
+    );
   }
 
   return (
@@ -148,10 +132,18 @@ const Review: React.FC = () => {
         {renderGrid()}
       </div>
       <div className="score-panel" style={{ width: '17em' }}>
-        <h3>Review: {reviewIndex + 1} / {reviewData.length}</h3>
-        <h3>Yellow: {relScoreDisplay(reviewData[reviewIndex].weight - reviewData[reviewIndex].maxWeight)}</h3>
-        <h3>Selected: {relScoreDisplay(previewWeight && (previewWeight - reviewData[reviewIndex].maxWeight))}</h3>
-        <h3>Lines: {board.lines_cleared} / {stdMaxLines}</h3>
+        <h3>
+          Review: {reviewIndex + 1} / {reviewData.length}
+        </h3>
+        <h3>
+          Yellow: {relScoreDisplay(reviewData[reviewIndex].weight - reviewData[reviewIndex].maxWeight)}
+        </h3>
+        <h3>
+          Selected: {relScoreDisplay(previewWeight && previewWeight - reviewData[reviewIndex].maxWeight)}
+        </h3>
+        <h3>
+          Lines: {board.lines_cleared} / {stdMaxLines}
+        </h3>
         <h3>Score: {scoreDisplay(board.score)}</h3>
         <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
         <div style={{ marginTop: '0.5em' }}>
@@ -164,63 +156,5 @@ const Review: React.FC = () => {
     </div>
   );
 };
-
-function calculateCenterOfMass(
-  board: Board,
-  choice: Board,
-) {
-  let sumI = 0;
-  let sumJ = 0;
-  let count = 0;
-
-  for (let i = 0; i < 20; i++) {
-    for (let j = 0; j < 10; j++) {
-      if (choice.get(i, j) && !board.get(i, j)) {
-        // Calculate the center position of this block
-        sumI += (i + 0.5);
-        sumJ += (j + 0.5);
-        count++;
-      }
-    }
-  }
-
-  if (count === 0) {
-    return null;
-  }
-
-  return {
-    i: sumI / count,
-    j: sumJ / count,
-  };
-}
-
-function choosePreviewBoard(
-  board: Board,
-  currentChoices: Board[],
-  mousePos: { i: number, j: number } | undefined,
-) {
-  if (board.finished || currentChoices.length === 0 || !mousePos) {
-    return undefined;
-  }
-
-  const choiceDistances = currentChoices.map(choice => {
-    const center = calculateCenterOfMass(board, choice)!;
-    const di = center.i - mousePos.i;
-    const dj = center.j - mousePos.j;
-    return Math.sqrt(di * di + dj * dj);
-  });
-
-  const sortedIndexes = [...new Array(currentChoices.length)].map((_, i) => i);
-  sortedIndexes.sort((a, b) => choiceDistances[a] - choiceDistances[b]);
-
-  const closestChoice = currentChoices[sortedIndexes[0]];
-  // const closestChoiceDistance = choiceDistances[sortedIndexes[pick % sortedIndexes.length]];
-
-  return closestChoice;
-}
-
-function scoreDisplay(rawScore: number) {
-  return Math.round(19 * rawScore).toLocaleString();
-}
 
 export default Review;
