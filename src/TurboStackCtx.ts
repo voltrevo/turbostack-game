@@ -12,8 +12,10 @@ export default class TurboStackCtx {
   page = new Cell<'game' | 'review'>('game');
   board = new Cell<Board>(new Board(stdMaxLines));
   currentChoices = new Cell<Board[]>([]);
+  currentTop5Choices = new Cell<Board[]>([]);
   currentChoiceWeights = new Cell<number[] | undefined>(undefined);
   currentCellWeights = new Cell<number[][] | undefined>(undefined);
+  currentTop5CellWeights = new Cell<number[][] | undefined>(undefined);
   highScores = new LocalStorageCell<number[]>('high-scores', []);
   reviewMode = new Cell<'all' | 'current'>('all');
   autoPlay = new Cell<boolean>(false);
@@ -113,6 +115,36 @@ export default class TurboStackCtx {
     }
 
     this.currentCellWeights.set(cellWeights);
+
+    const top5Choices = this.currentChoices.get()
+      .map((c, i) => ({ c, w: choiceWeights[i] }))
+      .sort((a, b) => b.w - a.w)
+      .slice(0, 5)
+      .map(({ c }) => c);
+
+    this.currentTop5Choices.set(top5Choices);
+
+    const top5CellWeights = [];
+
+    for (let i = 0; i < 20; i++) {
+      top5CellWeights.push([] as number[]);
+
+      for (let j = 0; j < 10; j++) {
+        let sum = 0;
+
+        if (!board.get(i, j)) {
+          for (const choice of top5Choices) {
+            if (choice.get(i, j)) {
+              sum += 1 / 5;
+            }
+          }
+        }
+
+        top5CellWeights[i].push(sum);
+      }
+    }
+
+    this.currentTop5CellWeights.set(top5CellWeights);
   }
 
   setCurrentPiece(pieceType: PieceType) {

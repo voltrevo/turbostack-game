@@ -10,11 +10,15 @@ const Game: React.FC = () => {
   const [mousePos, setMousePos] = useState<{ i: number, j: number }>();
   const highScores = ctx.highScores.use();
   const currentChoices = ctx.currentChoices.use();
+  const currentTop5Choices = ctx.currentTop5Choices.use();
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const [showAi, setShowAi] = useState(false);
+  const [top5Only, setTop5Only] = useState(false);
   const autoPlay = ctx.autoPlay.use();
   const currentChoiceWeights = ctx.currentChoiceWeights.use();
   const currentCellWeights = ctx.currentCellWeights.use();
+  const currentTop5CellWeights = ctx.currentTop5CellWeights.use();
+  const applicableChoices = top5Only ? currentTop5Choices : currentChoices;
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!gameAreaRef.current) return;
@@ -34,8 +38,8 @@ const Game: React.FC = () => {
   let relPreviewBoardRating: number | undefined = undefined;
 
   if (!autoPlay) {
-    previewBoardIndex = choosePreviewBoard(board, currentChoices, mousePos);
-    previewBoard = previewBoardIndex !== undefined ? currentChoices[previewBoardIndex] : undefined;
+    previewBoardIndex = choosePreviewBoard(board, applicableChoices, mousePos);
+    previewBoard = previewBoardIndex !== undefined ? applicableChoices[previewBoardIndex] : undefined;
 
     if (currentChoiceWeights && previewBoardIndex !== undefined) {
       const maxRating = Math.max(...currentChoiceWeights);
@@ -53,7 +57,9 @@ const Game: React.FC = () => {
   const renderCell = (i: number, j: number) => {
     const isFilled = board.get(i, j);
 
-    const weight = currentCellWeights ? currentCellWeights[i][j] : 0;
+    const applicableWeights = top5Only ? currentTop5CellWeights : currentCellWeights;
+
+    const weight = applicableWeights ? applicableWeights[i][j] : 0;
     let isPreview = false;
 
     if (!isFilled && previewBoard && previewBoard.get(i, j)) {
@@ -124,6 +130,12 @@ const Game: React.FC = () => {
           Show AI
         </h3>
         {showAi && <>
+          <h3>
+            <input type="checkbox" checked={top5Only} onChange={() => setTop5Only(!top5Only)} />
+            Top 5 Only
+          </h3>
+        </>}
+        {showAi && !top5Only && <>
           <h3 style={{ width: '15em' }}>
             Rating: {relScoreDisplay(relPreviewBoardRating)}
           </h3>
@@ -206,6 +218,9 @@ function choosePreviewBoard(
 
   const choiceDistances = currentChoices.map(choice => {
     const center = calculateCenterOfMass(board, choice)!;
+    if (center === null) {
+      return Infinity;
+    }
     const di = center.i - mousePos.i;
     const dj = center.j - mousePos.j;
     return Math.sqrt(di * di + dj * dj);
