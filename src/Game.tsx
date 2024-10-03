@@ -116,7 +116,7 @@ const Game: React.FC = () => {
               </div>
               {!top5Only && (
                 <>
-                  <div style={{ width: '15em' }}>
+                  <div>
                     Rating: {relScoreDisplay(relPreviewBoardRating)}
                   </div>
                   <div>

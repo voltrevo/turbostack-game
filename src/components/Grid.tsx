@@ -6,7 +6,7 @@ type GridProps = {
   previewBoard?: Board;
   currentCellWeights?: number[][];
   showAi?: boolean;
-  onCellRender?: (i: number, j: number) => React.ReactNode;
+  onCellRender?: (i: number, j: number) => string[];
   startRow?: number;
   endRow?: number;
 };
@@ -33,10 +33,11 @@ const Grid: React.FC<GridProps> = ({
         ? 'cell preview'
         : 'cell';
 
+      const customClasses = (onCellRender && onCellRender(i, j)) ?? [];
+
       cells.push(
-        <div key={`${i}-${j}`} className={className}>
+        <div key={`${i}-${j}`} className={[className, ...customClasses].join(' ')}>
           {showAi && <div className="ai-dot" style={{ opacity: weight }}></div>}
-          {onCellRender && onCellRender(i, j)}
         </div>
       );
     }

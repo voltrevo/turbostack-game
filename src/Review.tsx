@@ -101,9 +101,7 @@ const Review: React.FC = () => {
               !isFilled &&
               reviewData &&
               reviewData[reviewIndex].to.get(i, j);
-            return isPreviousMove ? (
-              <div className="previous-move-marker"></div>
-            ) : null;
+            return isPreviousMove ? ['previous-move'] : [];
           }}
         />
       </div>
