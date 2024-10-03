@@ -5,8 +5,8 @@ import Cell from "./Cell";
 import { getRandomPieceType, PieceType } from "./PieceType";
 import LocalStorageCell from "./LocalStorageCell";
 import dataCollector from "./dataCollector";
-import { PredictionModel } from "./PredictionModel";
 import softmax from "./softmax";
+import { ScoreModel } from "./ScoreModel";
 
 export default class TurboStackCtx {
   page = new Cell<'game' | 'review'>('game');
@@ -18,10 +18,10 @@ export default class TurboStackCtx {
   reviewMode = new Cell<'all' | 'current'>('all');
   autoPlay = new Cell<boolean>(false);
   autoPlayTimer?: NodeJS.Timeout;
-  predictionModel?: PredictionModel;
+  scoreModel?: ScoreModel;
 
-  constructor(predictionModel?: PredictionModel) {
-    this.predictionModel = predictionModel;
+  constructor(scoreModel?: ScoreModel) {
+    this.scoreModel = scoreModel;
 
     const handleBoardChange = () => {
       this.currentChoices.set(
@@ -72,22 +72,24 @@ export default class TurboStackCtx {
     });
   }
 
-  recalculateWeights() {
-    if (!this.predictionModel) {
+  async recalculateWeights() {
+    if (!this.scoreModel) {
       return;
     }
 
-    const boardEvaluator = this.predictionModel.createBoardEvaluator();
+    const boardEvaluator = this.scoreModel.createBoardEvaluator();
 
-    const choiceWeights = softmax(boardEvaluator(
+    const choiceWeights = await boardEvaluator(
       this.currentChoices.get().map(c => {
         c = c.clone();
         c.removeClears();
         return c;
       }),
-    ));
+    );
 
     this.currentChoiceWeights.set(choiceWeights);
+
+    const pseudoProbs = softmax(choiceWeights, 100);
 
     const cellWeights = [];
     const board = this.board.get();
@@ -101,7 +103,7 @@ export default class TurboStackCtx {
         if (!board.get(i, j)) {
           for (const [ci, choice] of this.currentChoices.get().entries()) {
             if (choice.get(i, j)) {
-              sum += choiceWeights[ci];
+              sum += pseudoProbs[ci];
             }
           }
         }

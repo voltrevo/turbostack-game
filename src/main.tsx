@@ -2,12 +2,12 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import TurboStackCtx from './TurboStackCtx.ts'
-import { PredictionModel } from './PredictionModel.ts'
 import PageSelector from './PageSelector.tsx'
+import { ScoreModel } from './ScoreModel.ts'
 
 (async () => {
-  const predictionModel = await PredictionModel.load();
-  const ctx = new TurboStackCtx(predictionModel);
+  const scoreModel = await ScoreModel.load();
+  const ctx = new TurboStackCtx(scoreModel);
 
   (window as any).ctx = ctx;
 

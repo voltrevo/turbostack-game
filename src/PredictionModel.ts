@@ -1,7 +1,8 @@
 import * as tf from '@tensorflow/tfjs';
+import { evalNodeCount, extraFeatureLen } from './hyperParams';
 import { Board } from './Board';
 import { BoardEvaluator } from './BoardEvaluator';
-import { evalNodeCount, extraFeatureLen } from './hyperParams';
+import BatchProcessor from './BatchProcessor';
 
 export type PredictionModelDataPoint = {
     from: Board;
@@ -38,7 +39,7 @@ export class PredictionModel {
             kernelSize: [1, 10],
         }).apply(tensor) as tf.SymbolicTensor;
 
-        // tensor = tf.layers.leakyReLU({ alpha: 0.01 }).apply(tensor) as tf.SymbolicTensor;
+        tensor = tf.layers.leakyReLU({ alpha: 0.01 }).apply(tensor) as tf.SymbolicTensor;
 
         tensor = tf.layers.flatten().apply(tensor) as tf.SymbolicTensor;
 
@@ -53,18 +54,21 @@ export class PredictionModel {
 
         tensor = tf.layers.leakyReLU({ alpha: 0.01 }).apply(tensor) as tf.SymbolicTensor;
 
-        // tensor = tf.layers.dense({
-        //     units: 8,
-        //     activation: 'relu',
-        // }).apply(tensor) as tf.SymbolicTensor;
+        let prev = tensor;
+
+        tensor = tf.layers.dense({
+            units: 16,
+        }).apply(tensor) as tf.SymbolicTensor;
+
+        tensor = tf.layers.leakyReLU({ alpha: 0.01 }).apply(tensor) as tf.SymbolicTensor;
+
+        tensor = tf.layers.add().apply([tensor, prev]) as tf.SymbolicTensor;
 
         // tensor = tf.layers.dropout({ rate: 0.2 }).apply(tensor) as tf.SymbolicTensor;
 
         tensor = tf.layers.dense({
             units: 1,
         }).apply(tensor) as tf.SymbolicTensor;
-
-        tensor = tf.layers.leakyReLU({ alpha: 0.01 }).apply(tensor) as tf.SymbolicTensor;
 
         const model = tf.model({ inputs: [boardInput, paramsInput], outputs: tensor });
 
@@ -106,6 +110,18 @@ export class PredictionModel {
         }
     }
 
+    featuresModel(): tf.LayersModel {
+        const boardInput = tf.input({ shape: spatialShape });
+
+        let tensor = boardInput;
+
+        for (const layer of this.evalModel.layers.slice(1, 5)) {
+            tensor = layer.apply(tensor) as tf.SymbolicTensor;
+        }
+        
+        return tf.model({ inputs: boardInput, outputs: tensor });
+    }
+
     setLearningRate(learningRate: number) {
         this.learningRate = learningRate;
 
@@ -115,33 +131,44 @@ export class PredictionModel {
         });
     }
 
+    batchBoardEvaluator?: BoardEvaluator;
+
     createBoardEvaluator(): BoardEvaluator {
-        return (boards: Board[]): number[] => {
-            const mlInputData = boards.map(b => b.toMlInputData());
-
-            // Extract boards, scores, and lines remaining from the input boards
-            const boardData: Uint8Array[] = mlInputData.map(d => d.boardData);
-            const extraData: number[][] = mlInputData.map(d => [...d.extraFeatures]);
-
-            // Prepare tensors for the model
-            const inputTensors: tf.Tensor<tf.Rank>[] = [];
-
-            inputTensors.push(
-                // Shape: [batchSize, rows, cols, channels]
-                tf.tensor(boardData).reshape([boards.length, 21, 12, 1]),
+        if (!this.batchBoardEvaluator) {
+            this.batchBoardEvaluator = BatchProcessor.create(
+                boards => this.coreBoardEvaluator(boards),
+                512,
             );
+        }
 
-            inputTensors.push(
-                // Shape: [batchSize, extraFeatureLen]
-                tf.tensor(extraData).reshape([boards.length, extraFeatureLen]),
-            );
+        return this.batchBoardEvaluator;
+    }
 
-            // Perform batch inference
-            const evals = this.evalModel.predict(inputTensors) as tf.Tensor;
+    coreBoardEvaluator(boards: Board[]): number[] {
+        const mlInputData = boards.map(b => b.toMlInputData());
 
-            // Get the evals as a flat array
-            // Convert Float32Array to a normal array
-            return Array.from(evals.dataSync());
-        };
+        // Extract boards, scores, and lines remaining from the input boards
+        const boardData: Uint8Array[] = mlInputData.map(d => d.boardData);
+        const extraData: number[][] = mlInputData.map(d => [...d.extraFeatures]);
+
+        // Prepare tensors for the model
+        const inputTensors: tf.Tensor<tf.Rank>[] = [];
+
+        inputTensors.push(
+            // Shape: [batchSize, rows, cols, channels]
+            tf.tensor(boardData).reshape([boards.length, 21, 12, 1]),
+        );
+
+        inputTensors.push(
+            // Shape: [batchSize, extraFeatureLen]
+            tf.tensor(extraData).reshape([boards.length, extraFeatureLen]),
+        );
+
+        // Perform batch inference
+        const evals = this.evalModel.predict(inputTensors) as tf.Tensor;
+
+        // Get the evals as a flat array
+        // Convert Float32Array to a normal array
+        return Array.from(evals.dataSync());
     }
 }

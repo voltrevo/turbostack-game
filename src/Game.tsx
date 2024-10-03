@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Board } from './Board';
 import TurboStackCtx from './TurboStackCtx';
 import { stdMaxLines } from './params';
+import { relScoreDisplay } from './relScoreDisplay';
 
 const Game: React.FC = () => {
   const ctx = TurboStackCtx.use();
@@ -12,6 +13,8 @@ const Game: React.FC = () => {
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const [showAi, setShowAi] = useState(false);
   const autoPlay = ctx.autoPlay.use();
+  const currentChoiceWeights = ctx.currentChoiceWeights.use();
+  const currentCellWeights = ctx.currentCellWeights.use();
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!gameAreaRef.current) return;
@@ -26,9 +29,19 @@ const Game: React.FC = () => {
   };
 
   let previewBoard: Board | undefined = undefined;
+  let previewBoardIndex: number | undefined = undefined;
+  let previewBoardRating: number | undefined = undefined;
+  let relPreviewBoardRating: number | undefined = undefined;
 
   if (!autoPlay) {
-    previewBoard = choosePreviewBoard(board, currentChoices, mousePos);
+    previewBoardIndex = choosePreviewBoard(board, currentChoices, mousePos);
+    previewBoard = previewBoardIndex !== undefined ? currentChoices[previewBoardIndex] : undefined;
+
+    if (currentChoiceWeights && previewBoardIndex !== undefined) {
+      const maxRating = Math.max(...currentChoiceWeights);
+      previewBoardRating = currentChoiceWeights[previewBoardIndex];
+      relPreviewBoardRating = previewBoardRating - maxRating;
+    }
   }
 
   const handleClick = () => {
@@ -40,9 +53,7 @@ const Game: React.FC = () => {
   const renderCell = (i: number, j: number) => {
     const isFilled = board.get(i, j);
 
-    const currentChoiceWeights = ctx.currentCellWeights.get();
-
-    const weight = currentChoiceWeights ? currentChoiceWeights[i][j] : 0;
+    const weight = currentCellWeights ? currentCellWeights[i][j] : 0;
     let isPreview = false;
 
     if (!isFilled && previewBoard && previewBoard.get(i, j)) {
@@ -112,10 +123,22 @@ const Game: React.FC = () => {
           <input type="checkbox" checked={showAi} onChange={() => setShowAi(!showAi)} />
           Show AI
         </h3>
+        {showAi && <>
+          <h3 style={{ width: '15em' }}>
+            Rating: {relScoreDisplay(relPreviewBoardRating)}
+          </h3>
+          <h3>Prediction: {(() => {
+            if (currentChoiceWeights === undefined) {
+              return '';
+            }
+
+            return `${scoreDisplay(Math.max(...currentChoiceWeights))}`;
+          })()}</h3>
+        </>}
         <div>
           {!board.finished && <button onClick={() => ctx.restart()}>Restart</button>}
         </div>
-        {ctx.predictionModel && (
+        {ctx.scoreModel && (
           <div style={{ marginTop: '0.5em' }}>
             <button onClick={() => {
               ctx.reviewMode.set('current');
@@ -123,7 +146,7 @@ const Game: React.FC = () => {
             }}>Review Session</button>
           </div>
         )}
-        {ctx.predictionModel && (
+        {ctx.scoreModel && (
           <div style={{ marginTop: '0.5em' }}>
             <button onClick={() => {
               ctx.reviewMode.set('all');
@@ -191,14 +214,14 @@ function choosePreviewBoard(
   const sortedIndexes = [...new Array(currentChoices.length)].map((_, i) => i);
   sortedIndexes.sort((a, b) => choiceDistances[a] - choiceDistances[b]);
 
-  const closestChoice = currentChoices[sortedIndexes[0]];
+  const closestChoiceIndex = sortedIndexes[0];
   // const closestChoiceDistance = choiceDistances[sortedIndexes[pick % sortedIndexes.length]];
 
-  return closestChoice;
+  return closestChoiceIndex;
 }
 
 function scoreDisplay(rawScore: number) {
-  return (19 * rawScore).toLocaleString();
+  return Math.round(19 * rawScore).toLocaleString();
 }
 
 export default Game;

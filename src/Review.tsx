@@ -4,6 +4,7 @@ import TurboStackCtx from './TurboStackCtx';
 import { stdMaxLines } from './params';
 import getReviewData, { ReviewData } from './getReviewData';
 import dataCollector from './dataCollector';
+import { relScoreDisplay } from './relScoreDisplay';
 
 const Review: React.FC = () => {
   const ctx = TurboStackCtx.use();
@@ -18,13 +19,13 @@ const Review: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      if (!ctx.predictionModel) {
+      if (!ctx.scoreModel) {
         return;
       }
 
       const rd = await getReviewData(
         ctx.reviewMode.get(),
-        ctx.predictionModel,
+        ctx.scoreModel,
         setProgress,
       );
 
@@ -51,11 +52,11 @@ const Review: React.FC = () => {
   };
 
   const previewBoard = choosePreviewBoard(board, currentChoices, mousePos);
-  let previewProbability: number | undefined = undefined;
+  let previewWeight: number | undefined = undefined;
 
   if (previewBoard && currentChoiceWeights) {
     const pi = currentChoices.indexOf(previewBoard);
-    previewProbability = currentChoiceWeights[pi];
+    previewWeight = currentChoiceWeights[pi];
   }
 
   const handleClick = () => {
@@ -146,10 +147,10 @@ const Review: React.FC = () => {
       >
         {renderGrid()}
       </div>
-      <div className="score-panel">
+      <div className="score-panel" style={{ width: '17em' }}>
         <h3>Review: {reviewIndex + 1} / {reviewData.length}</h3>
-        <h3>P(Yellow): {(reviewData[reviewIndex].probability * 100).toFixed(1)}%</h3>
-        <h3>P(Selected): {previewProbability === undefined ? 'error' : (previewProbability * 100).toFixed(1)}%</h3>
+        <h3>Yellow: {relScoreDisplay(reviewData[reviewIndex].weight - reviewData[reviewIndex].maxWeight)}</h3>
+        <h3>Selected: {relScoreDisplay(previewWeight && (previewWeight - reviewData[reviewIndex].maxWeight))}</h3>
         <h3>Lines: {board.lines_cleared} / {stdMaxLines}</h3>
         <h3>Score: {scoreDisplay(board.score)}</h3>
         <h3>Tetris Rate: {Math.floor(board.getTetrisRate() * 100)}%</h3>
@@ -219,7 +220,7 @@ function choosePreviewBoard(
 }
 
 function scoreDisplay(rawScore: number) {
-  return (19 * rawScore).toLocaleString();
+  return Math.round(19 * rawScore).toLocaleString();
 }
 
 export default Review;

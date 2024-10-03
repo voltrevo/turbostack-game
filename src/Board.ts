@@ -1,6 +1,8 @@
-import { extraFeatureLen, useCustomFeatures } from './hyperParams';
+// Import the necessary classes and enums from PieceType.ts
+import { extraFeatureLen, stdMaxLines, useCustomFeatures } from './hyperParams';
 import { grids, Piece, PieceType, RotateDir } from './PieceType';
 
+// Define BoardRow class
 class BoardRow {
     private value: number;
 
@@ -36,8 +38,9 @@ class BoardRow {
     }
 }
 
+// Define BoardCol class
 class BoardCol {
-    public value: number;
+    value: number;
 
     constructor() {
         this.value = 0;
@@ -133,8 +136,11 @@ class BoardCol {
     }
 }
 
+export type MlInputData = ReturnType<Board['toMlInputData']>;
+
 export type BoardJson = ReturnType<Board['toJson']>;
 
+// Define the Board class
 export class Board {
     rows: BoardRow[];
     cols: BoardCol[];
@@ -203,6 +209,20 @@ export class Board {
     getTetrisRate() {
         return (4 * this.tetrises) / this.lines_cleared;
     }
+
+    static checkerboard = (() => {
+        const res = new Board(stdMaxLines);
+
+        for (let i = 0; i < 20; i++) {
+            for (let j = 0; j < 10; j++) {
+                if ((i + j) % 2 === 0) {
+                    res.flip(i, j);
+                }
+            }
+        }
+
+        return res;
+    })();
 
     removeClears(): void {
         let linesCleared = 0;
@@ -435,8 +455,6 @@ export class Board {
         return newBoard;
     }
 
-
-
     toMlInputData() {
         const boardData = new Uint8Array(21 * 12);
 
@@ -478,6 +496,8 @@ export class Board {
 
         return {
             boardData,
+            score: this.score,
+            linesRemaining: this.linesRemaining(),
             extraFeatures,
         };
     }

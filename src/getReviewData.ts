@@ -2,8 +2,7 @@ import { Board } from "./Board";
 import dataCollector from "./dataCollector";
 import never from "./never";
 import { ALL_PIECE_TYPES, PIECE_GRIDS } from "./PieceType";
-import { PredictionModel } from "./PredictionModel";
-import softmax from "./softmax";
+import { ScoreModel } from "./ScoreModel";
 
 type Unpromise<T> = T extends Promise<infer U> ? U : T;
 type AsyncReturnType<T extends (...args: any) => any> = Unpromise<ReturnType<T>>;
@@ -12,10 +11,10 @@ export type ReviewData = AsyncReturnType<typeof getReviewData>;
 
 export default async function getReviewData(
   mode: 'all' | 'current',
-  predictionModel: PredictionModel,
+  scoreModel: ScoreModel,
   setProgress: (progress: string) => void,
 ) {
-  const boardEvaluator = predictionModel.createBoardEvaluator();
+  const boardEvaluator = scoreModel.createBoardEvaluator();
   const points = [];
 
   let sourceData;
@@ -58,7 +57,7 @@ export default async function getReviewData(
       continue;
     }
 
-    const probabilities = softmax(boardEvaluator(choices));
+    let weights = await boardEvaluator(choices);
 
     points.push({
       i,
@@ -66,7 +65,8 @@ export default async function getReviewData(
       to,
       time: data.time,
       pieceType,
-      probability: probabilities[toIndex],
+      weight: weights[toIndex],
+      maxWeight: Math.max(...weights),
     });
 
     setProgress(`${i + 1}/${sourceData.length}`);
@@ -74,7 +74,7 @@ export default async function getReviewData(
     await new Promise(resolve => setTimeout(resolve));
   }
 
-  points.sort((a, b) => a.probability - b.probability);
+  points.sort((a, b) => (a.weight - a.maxWeight) - (b.weight - b.maxWeight));
 
   return points;
 }
