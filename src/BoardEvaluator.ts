@@ -27,3 +27,7 @@ export function deeperBoardEvaluator(boardEvaluator: BoardEvaluator): BoardEvalu
         return evals;
     };
 }
+
+export const randomBoardEvaluator: BoardEvaluator = async (boards: Board[]): Promise<number[]> => {
+    return boards.map(_b => Math.random());
+}

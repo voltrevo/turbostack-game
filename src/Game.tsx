@@ -148,6 +148,12 @@ const Game: React.FC = () => {
               }}>
                 Review History
               </button></div>
+
+              <div><button onClick={() => {
+                ctx.page.set('versus');
+              }}>
+                Play vs AI
+              </button></div>
             </>
           )}
           <button onClick={() => ctx.downloadData()}>Download your data</button>

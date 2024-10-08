@@ -7,9 +7,10 @@ import LocalStorageCell from "./LocalStorageCell";
 import dataCollector from "./dataCollector";
 import softmax from "./softmax";
 import { ScoreModel } from "./ScoreModel";
+import VersusCtx from "./VersusCtx";
 
 export default class TurboStackCtx {
-  page = new Cell<'game' | 'review'>('game');
+  page = new Cell<'game' | 'review' | 'versus'>('game');
   board = new Cell<Board>(new Board(stdMaxLines));
   currentChoices = new Cell<Board[]>([]);
   currentTop5Choices = new Cell<Board[]>([]);
@@ -21,9 +22,11 @@ export default class TurboStackCtx {
   autoPlay = new Cell<boolean>(false);
   autoPlayTimer?: NodeJS.Timeout;
   scoreModel?: ScoreModel;
+  vs: VersusCtx;
 
   constructor(scoreModel?: ScoreModel) {
     this.scoreModel = scoreModel;
+    this.vs = new VersusCtx(scoreModel);
 
     const handleBoardChange = () => {
       this.currentChoices.set(
