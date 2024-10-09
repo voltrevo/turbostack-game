@@ -26,7 +26,7 @@ export default class TurboStackCtx {
 
   constructor(scoreModel?: ScoreModel) {
     this.scoreModel = scoreModel;
-    this.vs = new VersusCtx(scoreModel);
+    this.vs = new VersusCtx(scoreModel, this.page);
 
     const handleBoardChange = () => {
       this.currentChoices.set(

@@ -5,6 +5,7 @@ import dataCollector from "./dataCollector";
 import { stdMaxLines } from "./hyperParams";
 import { getRandomPieceType } from "./PieceType";
 import { ScoreModel } from "./ScoreModel";
+import TurboStackCtx from "./TurboStackCtx";
 
 export default class VersusCtx {
   boards = {
@@ -13,8 +14,20 @@ export default class VersusCtx {
     aiNextBoard: new Cell<Board>(new Board(stdMaxLines)),
   };
   currentChoices = new Cell<Board[]>([]);
+  gameOver = new Cell<boolean>(false);
 
-  constructor(public scoreModel?: ScoreModel) {
+  constructor(
+    public scoreModel: ScoreModel | undefined,
+    public page: TurboStackCtx['page'],
+  ) {
+    this.setupNewPiece();
+  }
+
+  restart() {
+    this.boards.player.set(new Board(stdMaxLines));
+    this.boards.ai.set(new Board(stdMaxLines));
+    this.boards.aiNextBoard.set(new Board(stdMaxLines));
+    this.gameOver.set(false);
     this.setupNewPiece();
   }
 
@@ -47,11 +60,29 @@ export default class VersusCtx {
     c.removeClears();
 
     this.boards.player.set(c);
+    this.next();
+  }
+
+  async next() {
     const aiNext = this.boards.aiNextBoard.get().clone();
     aiNext.removeClears();
     this.boards.ai.set(aiNext);
-
     this.setupNewPiece();
+
+    if (!this.boards.player.get().finished || this.page.get() !== 'versus') {
+      return;
+    }
+
+    if (
+      !aiNext.finished &&
+      aiNext.score <= this.boards.player.get().score
+    ) {
+      setTimeout(() => {
+        this.next();
+      }, 500);
+    } else {
+      this.gameOver.set(true);
+    }
   }
 
   boardEvaluator() {

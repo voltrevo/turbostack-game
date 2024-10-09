@@ -13,6 +13,19 @@ const Game: React.FC = () => {
   const aiBoard = ctx.boards.ai.use();
   const aiNextBoard = ctx.boards.aiNextBoard.use();
   const choices = ctx.currentChoices.use();
+  const gameOver = ctx.gameOver.use();
+
+  const gameResult = (() => {
+    if (playerBoard.score > aiBoard.score) {
+      return { player: 'WIN', ai: 'LOSE' };
+    }
+
+    if (playerBoard.score < aiBoard.score) {
+      return { player: 'LOSE', ai: 'WIN' };
+    }
+
+    return { player: 'DRAW', ai: 'DRAW' };
+  })();
 
   const { mousePos, gameAreaRef, handleMouseMove } = useMousePosition();
 
@@ -49,6 +62,10 @@ const Game: React.FC = () => {
             board={playerBoard}
             previewBoard={previewBoard}
           />
+          {gameOver && <div className="game-over">
+            <h2>{gameResult.player}</h2>
+            <button onClick={() => ctx.restart()}>Play Again</button>
+          </div>}
         </div>
       </div>
       <div className="game-container">
@@ -64,6 +81,10 @@ const Game: React.FC = () => {
             board={aiBoard}
             previewBoard={aiNextBoard}
           />
+          {gameOver && <div className="game-over">
+            <h2>{gameResult.ai}</h2>
+            <button style={{ visibility: 'hidden' }} onClick={() => ctx.restart()}>Play Again</button>
+          </div>}
         </div>
       </div>
     </div>

@@ -120,6 +120,10 @@ export default class BatchProcessor<Input, Output> {
      * @returns A promise that resolves with an array of outputs corresponding to the inputs.
      */
     public process(inputs: Input[]): Promise<Output[]> {
+        if (inputs.length === 0) {
+            return Promise.resolve([]);
+        }
+
         return new Promise((resolve, reject) => {
             this.requestQueue.push({ resolve, reject, inputs });
             this.queueSize += inputs.length;

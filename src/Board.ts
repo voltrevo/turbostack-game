@@ -377,6 +377,10 @@ export class Board {
     }
 
     findChoices(pieceType: PieceType): Board[] {
+        if (this.finished) {
+            return [];
+        }
+
         const fittablePieces = new Map<number, Piece>();
         const restPositions = this.findRestPositions();
 
