@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import TurboStackCtx from './TurboStackCtx';
 import { stdMaxLines } from './params';
 import { relScoreDisplay } from './relScoreDisplay';
@@ -12,6 +12,7 @@ const Game: React.FC = () => {
   const board = ctx.board.use();
   const highScores = ctx.highScores.use();
   const [showAi, setShowAi] = useState(false);
+  const [preferSpacebar, setPreferSpacebar] = useState(false);
   const [top5Only, setTop5Only] = useState(false);
   const autoPlay = ctx.autoPlay.use();
   const currentChoiceWeights = ctx.currentChoiceWeights.use();
@@ -39,10 +40,22 @@ const Game: React.FC = () => {
   }
 
   const handleClick = () => {
-    if (!board.finished && previewBoard) {
+    if (!board.finished && previewBoard && !preferSpacebar) {
       ctx.chooseBoard(previewBoard);
     }
   };
+
+  // spacebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === ' ' && !board.finished && previewBoard && preferSpacebar) {
+        ctx.chooseBoard(previewBoard);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   const applicableWeights = top5Only ? currentTop5CellWeights : currentCellWeights;
 
@@ -129,6 +142,17 @@ const Game: React.FC = () => {
               )}
             </>
           )}
+        </div>
+
+        <div className="score-box">
+          <div>
+            <input
+              type="checkbox"
+              checked={preferSpacebar}
+              onChange={() => setPreferSpacebar(!preferSpacebar)}
+            />
+            Spacebar instead of click
+          </div>
         </div>
 
         <div className="score-box">
