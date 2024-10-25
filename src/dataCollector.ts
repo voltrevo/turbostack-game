@@ -26,15 +26,19 @@ class DataCollector {
   }
 
   add(from: Board, to: Board) {
-    const i = this.size.get();
+    try {
+      const i = this.size.get();
 
-    this.at(i).set({
-      time: Date.now(),
-      from: from.toJson(),
-      to: to.toJson(),
-    });
-
-    this.size.set(i + 1);
+      this.at(i).set({
+        time: Date.now(),
+        from: from.toJson(),
+        to: to.toJson(),
+      });
+  
+      this.size.set(i + 1);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   all() {

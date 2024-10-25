@@ -169,9 +169,13 @@ export default class TurboStackCtx {
   }
 
   addScore(score: number) {
-    const newHighScores = [...this.highScores.get(), score];
-    newHighScores.sort((a, b) => b - a);
-    this.highScores.set(newHighScores.slice(0, 10));
+    try {
+      const newHighScores = [...this.highScores.get(), score];
+      newHighScores.sort((a, b) => b - a);
+      this.highScores.set(newHighScores.slice(0, 10));
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   restart() {
